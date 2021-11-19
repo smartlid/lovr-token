@@ -673,7 +673,7 @@ contract LOVR is Context, IBEP20, Ownable {
     }
 
     function unlockAnnually() internal {
-        if ((_lockReleaseStep < 5) && (launchedAtTimestamp + (365 days * _lockReleaseStep) < block.timestamp)) {
+        if ((_lockReleaseStep < 5) && ((launchedAtTimestamp + (365 days * _lockReleaseStep)) < block.timestamp)) {
             _balances[owner()] = _balances[owner()].add(_lockedAmounts[_lockReleaseStep - 1]);
             _currentTotalSupply = _currentTotalSupply.add(_lockedAmounts[_lockReleaseStep - 1]);
             emit Transfer(address(0), owner(), _lockedAmounts[_lockReleaseStep - 1]);
