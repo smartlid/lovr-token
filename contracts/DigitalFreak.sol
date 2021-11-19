@@ -535,8 +535,8 @@ contract LOVR is Context, IBEP20, Ownable {
     uint256 public developmentFee = 5;  // 5%
     uint256 public rewardFee = 2;   // 2%
 
-    address private marketingFeeReceiver = address(0xA00dB5424da9ECFC26E0450200D42bab4652602d);
-    address private developmentFeeReceiver = address(0x620dc94C842817d5d8b8207aa2DdE4f8C8b73415);
+    address private marketingFeeReceiver = 0xA00dB5424da9ECFC26E0450200D42bab4652602d;
+    address private developmentFeeReceiver = 0x620dc94C842817d5d8b8207aa2DdE4f8C8b73415;
 
     DividendDistributor distributor;
     uint256 distributorGas = 500000;
@@ -687,8 +687,8 @@ contract LOVR is Context, IBEP20, Ownable {
     }
 
     function shouldTakeFee(address sender, address recipient) internal view returns (bool) {
-        return (sender == address(uniswapV2Pair) && !isFeeExempt[sender]) ||
-            (recipient == address(uniswapV2Pair) && !isFeeExempt[recipient]);
+        return (sender == address(uniswapV2Pair) && !isFeeExempt[recipient]) ||
+            (recipient == address(uniswapV2Pair) && !isFeeExempt[sender]);
     }
 
     function shouldSwapAndDistribute() internal view returns (bool) {
