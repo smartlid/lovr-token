@@ -499,24 +499,27 @@ contract DividendDistributor is IDividendDistributor {
 }
 
 
-contract ChangeMe is Context, IBEP20, Ownable {
+contract LOVR is Context, IBEP20, Ownable {
     using SafeMath for uint256;
 
     address public DEAD = 0x000000000000000000000000000000000000dEaD;
 
-    string private _name = "ChangeMe";
-    string private _symbol = "Change";
-    uint8 private _decimals = 9;
+    string private _name = "The LOVR Token";
+    string private _symbol = "LOVR";
+    uint8 private _decimals = 18;
 
     uint256 launchedAtTimestamp;
-    uint256 _totalSupply = 1_000_000_000_000_000 * (10 ** _decimals);
+    uint256 _totalSupply = 10_000_000_000 * (10 ** _decimals);
     uint256 _totalLockedAmount = 7_500_000_000 *  (10 ** _decimals);
     uint256 _currentTotalSupply = _totalSupply.sub(_totalLockedAmount);
+
+    uint256[4] _lockedAmounts = [2000000000 * (10 ** _decimals), 2000000000 * (10 ** _decimals), 2000000000 * (10 ** _decimals), 1500000000 * (10 ** _decimals)];
+    uint8 _lockReleaseStep = 1;
     
     uint256 public _maxTxAmount = _totalSupply.div(400); // 0.25%
     uint256 private minimumTokensBeforeSwap = 1000_000 * 10**6 * (10 ** _decimals);
     // whenever it reaches 200BNB, then distribute to all holder
-    uint256 private minimumBalanceBeforeDistributeBack = 200 * (10 ** 18);  // 200 BNB
+    uint256 private rewardsDistributeThreshold = 200 * (10 ** 18);  // 200 BNB
     
     IUniswapV2Router public uniswapV2Router;
     address public uniswapV2Pair;
@@ -532,8 +535,8 @@ contract ChangeMe is Context, IBEP20, Ownable {
     uint256 public developmentFee = 5;  // 5%
     uint256 public rewardFee = 2;   // 2%
 
-    address private marketingFeeReceiver;
-    address private developmentFeeReceiver;
+    address private marketingFeeReceiver = address(0xA00dB5424da9ECFC26E0450200D42bab4652602d);
+    address private developmentFeeReceiver = address(0x620dc94C842817d5d8b8207aa2DdE4f8C8b73415);
 
     DividendDistributor distributor;
     uint256 distributorGas = 500000;
@@ -550,13 +553,15 @@ contract ChangeMe is Context, IBEP20, Ownable {
         inSwap = false;
     }
 
-    constructor(address _router, address _marketingFeeReceiver, address _developmentFeeReceiver) {
+    constructor() {
         // uniswapV2Router = IUniswapV2Router(0x10ED43C718714eb63d5aA57B78B54704E256024E);
+        address _router = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
+
         uniswapV2Router = IUniswapV2Router(_router);
         uniswapV2Pair = IUniswapV2Factory(uniswapV2Router.factory())
             .createPair(address(this), uniswapV2Router.WETH());
 
-        distributor = new DividendDistributor(address(uniswapV2Router), _msgSender());
+        distributor = new DividendDistributor(_router, _msgSender());
 
         isFeeExempt[msg.sender] = true;
         isTxLimitExempt[msg.sender] = true;
@@ -564,9 +569,6 @@ contract ChangeMe is Context, IBEP20, Ownable {
         isDividendExempt[address(uniswapV2Pair)] = true;
         isDividendExempt[address(this)] = true;
         isDividendExempt[DEAD] = true;
-
-        marketingFeeReceiver = _marketingFeeReceiver;
-        developmentFeeReceiver = _developmentFeeReceiver;
 
         launchedAtTimestamp = block.timestamp;
         _balances[_msgSender()] = _currentTotalSupply;
@@ -608,7 +610,7 @@ contract ChangeMe is Context, IBEP20, Ownable {
     }
 
     function transferFrom(address sender, address recipient, uint256 amount) external override returns (bool) {
-        _transfer(_msgSender(), recipient, amount);
+        _transfer(sender, recipient, amount);
         _approve(sender, _msgSender(), _allowances[sender][_msgSender()].sub(amount, "ERC20: transfer amount exceeds allowance"));
         return true;
     }
@@ -656,10 +658,9 @@ contract ChangeMe is Context, IBEP20, Ownable {
         if(!isDividendExempt[sender]){ try distributor.setShare(sender, _balances[sender]) {} catch {} }
         if(!isDividendExempt[recipient]){ try distributor.setShare(recipient, _balances[recipient]) {} catch {} }
 
-        if (address(distributor).balance >= minimumBalanceBeforeDistributeBack) {
+        if (address(distributor).balance >= rewardsDistributeThreshold) {
             try distributor.process(distributorGas) {} catch {}
         }
-
         unlockAnnually();
 
         emit Transfer(sender, recipient, amountReceived);
@@ -672,7 +673,13 @@ contract ChangeMe is Context, IBEP20, Ownable {
     }
 
     function unlockAnnually() internal {
+        if ((_lockReleaseStep < 5) && (launchedAtTimestamp + (365 days * _lockReleaseStep) < block.timestamp)) {
+            _balances[owner()] = _balances[owner()].add(_lockedAmounts[_lockReleaseStep - 1]);
+            _currentTotalSupply = _currentTotalSupply.add(_lockedAmounts[_lockReleaseStep - 1]);
+            emit Transfer(address(0), owner(), _lockedAmounts[_lockReleaseStep - 1]);
 
+            _lockReleaseStep = _lockReleaseStep + 1;
+        }
     }
 
     function checkTxLimit(address sender, uint256 amount) internal view {
@@ -692,7 +699,7 @@ contract ChangeMe is Context, IBEP20, Ownable {
         uint256 tMarketing = amount.mul(marketingFee).div(100);
         uint256 tDevelopment = amount.mul(developmentFee).div(100);
         uint256 tReward = amount.mul(rewardFee).div(100);
-        uint256 transferAmount = amount.sub(marketingFee).sub(tDevelopment).sub(tReward);
+        uint256 transferAmount = amount.sub(tMarketing).sub(tDevelopment).sub(tReward);
 
         return (transferAmount, tMarketing, tDevelopment, tReward);
     }
@@ -722,8 +729,8 @@ contract ChangeMe is Context, IBEP20, Ownable {
         emit SwapTokensForETH(tokenAmount, path);
     }
 
-    function setMinimumBalanceBeforeDistributeBack(uint256 _minimumBalanceBeforeDistributeBack) external onlyOwner {
-        minimumBalanceBeforeDistributeBack = _minimumBalanceBeforeDistributeBack;
+    function setRewardsDistributeThreshold(uint256 _rewardsDistributeThreshold) external onlyOwner {
+        rewardsDistributeThreshold = _rewardsDistributeThreshold;
     }
 
     function setIsFeeExempt(address holder, bool exempt) external onlyOwner {
