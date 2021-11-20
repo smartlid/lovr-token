@@ -82,9 +82,9 @@ library SafeMath {
 }
 
 contract Ownable is Context {
-    address private _owner;
-    address private _previousOwner;
-    uint256 private _lockTime;
+    address _owner;
+    address _previousOwner;
+    uint256 _lockTime;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
@@ -493,7 +493,7 @@ contract DividendDistributor is IDividendDistributor {
         return shares[shareholder].amount;
     }
     
-    function transferToAddressETH(address payable recipient, uint256 amount) private {
+    function transferToAddressETH(address payable recipient, uint256 amount) internal {
         recipient.transfer(amount);
     }
 }
@@ -504,9 +504,9 @@ contract LOVR is Context, IBEP20, Ownable {
 
     address public DEAD = 0x000000000000000000000000000000000000dEaD;
 
-    string private _name = "The LOVR Token";
-    string private _symbol = "LOVR";
-    uint8 private _decimals = 18;
+    string _name = "The LOVR Token";
+    string _symbol = "LOVR";
+    uint8 _decimals = 18;
 
     uint256 launchedAtTimestamp;
     uint256 _totalSupply = 10_000_000_000 * (10 ** _decimals);
@@ -517,9 +517,9 @@ contract LOVR is Context, IBEP20, Ownable {
     uint8 _lockReleaseStep = 1;
     
     uint256 public _maxTxAmount = _currentTotalSupply.div(400); // 0.25%
-    uint256 private minimumTokensBeforeSwap = 10 * 10**6 * (10 ** _decimals);
+    uint256 minimumTokensBeforeSwap = 10 * 10**6 * (10 ** _decimals);
     // whenever it reaches 200BNB, then distribute to all holder
-    uint256 private rewardsDistributeThreshold = 200 * (10 ** 18);  // 200 BNB
+    uint256 rewardsDistributeThreshold = 200 * (10 ** 18);  // 200 BNB
     
     IUniswapV2Router public uniswapV2Router;
     address public uniswapV2Pair;
@@ -527,16 +527,16 @@ contract LOVR is Context, IBEP20, Ownable {
     mapping (address => uint256) _balances;
     mapping (address => mapping (address => uint256)) _allowances;
 
-    mapping (address => bool) private isFeeExempt;
-    mapping (address => bool) private isDividendExempt;
-    mapping (address => bool) private isTxLimitExempt;
+    mapping (address => bool) isFeeExempt;
+    mapping (address => bool) isDividendExempt;
+    mapping (address => bool) isTxLimitExempt;
 
     uint256 public marketingFee = 5;    // 5%
     uint256 public developmentFee = 5;  // 5%
     uint256 public rewardFee = 2;   // 2%
 
-    address private marketingFeeReceiver = 0xA00dB5424da9ECFC26E0450200D42bab4652602d;
-    address private developmentFeeReceiver = 0x620dc94C842817d5d8b8207aa2DdE4f8C8b73415;
+    address marketingFeeReceiver = 0xA00dB5424da9ECFC26E0450200D42bab4652602d;
+    address developmentFeeReceiver = 0x620dc94C842817d5d8b8207aa2DdE4f8C8b73415;
 
     DividendDistributor distributor;
     uint256 distributorGas = 500000;
@@ -615,7 +615,7 @@ contract LOVR is Context, IBEP20, Ownable {
         return true;
     }
 
-    function _approve(address owner, address spender, uint256 amount) private {
+    function _approve(address owner, address spender, uint256 amount) internal {
         require(owner != address(0), "ERC20: approve from the zero address");
         require(spender != address(0), "ERC20: approve to the zero address");
 
