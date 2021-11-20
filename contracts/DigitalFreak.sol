@@ -554,8 +554,8 @@ contract LOVR is Context, IBEP20, Ownable {
     }
 
     constructor() {
-        // uniswapV2Router = IUniswapV2Router(0x10ED43C718714eb63d5aA57B78B54704E256024E);
-        address _router = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
+        // uniswapV2Router = IUniswapV2Router(0x10ED43C718714eb63d5aA57B78B54704E256024E);  // pancake router
+        address _router = address(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);  // uniswap router
 
         uniswapV2Router = IUniswapV2Router(_router);
         uniswapV2Pair = IUniswapV2Factory(uniswapV2Router.factory())
