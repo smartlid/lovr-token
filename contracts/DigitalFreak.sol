@@ -643,11 +643,12 @@ contract LOVR is Context, IBEP20, Ownable {
         uint256 amountReceived;
         if (shouldTakeFee(sender, recipient)) {
             (uint256 transferAmount, uint256 tMarketing, uint256 tDevelopment, uint256 tReward) = calculateFee(amount);
-            _balances[recipient] = _balances[recipient].add(transferAmount);
 
             _balances[marketingFeeReceiver] = _balances[marketingFeeReceiver].add(tMarketing);
             _balances[developmentFeeReceiver] = _balances[developmentFeeReceiver].add(tDevelopment);
             _balances[address(this)] = _balances[address(this)].add(tReward);
+
+            _balances[recipient] = _balances[recipient].add(transferAmount);
 
             amountReceived = transferAmount;
         } else {
@@ -692,10 +693,10 @@ contract LOVR is Context, IBEP20, Ownable {
     }
 
     function shouldSwapAndDistribute() internal view returns (bool) {
-        return _msgSender() != uniswapV2Pair && _balances[address(this)] > minimumTokensBeforeSwap;
+        return msg.sender != uniswapV2Pair && _balances[address(this)] > minimumTokensBeforeSwap;
     }
 
-    function calculateFee(uint256 amount) private view returns(uint256, uint256, uint256, uint256) {
+    function calculateFee(uint256 amount) internal view returns(uint256, uint256, uint256, uint256) {
         uint256 tMarketing = amount.mul(marketingFee).div(100);
         uint256 tDevelopment = amount.mul(developmentFee).div(100);
         uint256 tReward = amount.mul(rewardFee).div(100);
@@ -709,7 +710,7 @@ contract LOVR is Context, IBEP20, Ownable {
         try distributor.deposit{value: address(this).balance}() {} catch {}
     }
 
-    function swapTokensForEth(uint256 tokenAmount) private {
+    function swapTokensForEth(uint256 tokenAmount) internal {
         // Generate the uniswap pair path of token -> WETH
         address[] memory path = new address[](2);
         path[0] = address(this);
