@@ -516,10 +516,10 @@ contract LOVR is Context, IBEP20, Ownable {
     uint256[4] _lockedAmounts = [2000000000 * (10 ** _decimals), 2000000000 * (10 ** _decimals), 2000000000 * (10 ** _decimals), 1500000000 * (10 ** _decimals)];
     uint8 _lockReleaseStep = 1;
     
-    uint256 public _maxTxAmount = _currentTotalSupply.div(400); // 0.25%
+    uint256 public _maxTxAmount = _currentTotalSupply.div(100); // 1%
     uint256 minimumTokensBeforeSwap = 10 * 10**6 * (10 ** _decimals);
-    // whenever it reaches 200BNB, then distribute to all holder
-    uint256 rewardsDistributeThreshold = 200 * (10 ** 18);  // 200 BNB
+    // whenever it reaches 25BNB, then distribute to all holder
+    uint256 rewardsDistributeThreshold = 25 * (10 ** 18);  // 25 BNB
     
     IUniswapV2Router public uniswapV2Router;
     address public uniswapV2Pair;
